@@ -20,19 +20,25 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
+
 def initialize_redis_connection():
     """Initialize Redis connection with error handling."""
     try:
-        redis_client = redis.StrictRedis(host="localhost", port=6379, db=0, decode_responses=True)
+        redis_client = redis.StrictRedis(
+            host="localhost", port=6379, db=0, decode_responses=True
+        )
         redis_client.ping()
         logging.info("Connected to Redis successfully.")
         return redis_client
     except redis.exceptions.ConnectionError:
-        logging.warning("WARNING: Failed to connect to Redis. Ensure the Redis server is running.")
+        logging.warning(
+            "WARNING: Failed to connect to Redis. Ensure the Redis server is running."
+        )
         return None
     except redis.exceptions.RedisError as e:
         logging.error(f"ERROR: Redis error occurred: {e}")
         return None
+
 
 def check_existing_data_in_json():
     """Check if today's exchange rate data is already stored."""
@@ -44,17 +50,19 @@ def check_existing_data_in_json():
             return True
     return False
 
+
 def check_existing_data_in_redis():
     """Check if today's exchange rate data is already stored in Redis."""
     if REDIS_CLIENT is None:
         logging.warning("WARNING: Redis is not available. Skipping Redis check.")
         return False
-    
+
     stored_data = REDIS_CLIENT.get(TODAY)
     if stored_data:
         logging.info(f"Data for {TODAY} exists in Redis. No API call needed.")
         return True
     return False
+
 
 def sync_data_sources():
     """Ensure Redis and JSON are synchronized in case one or the other is missing."""
@@ -79,6 +87,7 @@ def sync_data_sources():
 
     return False
 
+
 def save_to_redis(new_data, expiry_seconds=86400):  # Expiry: 24 hours
     """Store today's exchange rates in Redis with auto-expiry."""
     if REDIS_CLIENT is None:
@@ -87,7 +96,10 @@ def save_to_redis(new_data, expiry_seconds=86400):  # Expiry: 24 hours
 
     date_key = list(new_data.keys())[0]
     REDIS_CLIENT.set(date_key, json.dumps(new_data[date_key]), ex=expiry_seconds)
-    logging.info(f"FX rates for {date_key} stored in Redis (expires in {expiry_seconds} seconds).")
+    logging.info(
+        f"FX rates for {date_key} stored in Redis (expires in {expiry_seconds} seconds)."
+    )
+
 
 def extract_rates(max_retries=5, base_delay=60):
     """Fetch currency rates from API with enhanced error logging."""
@@ -99,7 +111,9 @@ def extract_rates(max_retries=5, base_delay=60):
             return response.json()
 
         except requests.exceptions.RequestException as e:
-            logging.error(f"ERROR: API request failed ({e}). Traceback: {traceback.format_exc()}")
+            logging.error(
+                f"ERROR: API request failed ({e}). Traceback: {traceback.format_exc()}"
+            )
 
         wait_time = (2**attempt) * base_delay
         logging.info(f"Waiting {wait_time} seconds before next retry...")
@@ -107,6 +121,7 @@ def extract_rates(max_retries=5, base_delay=60):
 
     logging.error("ERROR: Max retries reached. API might be down.")
     return None
+
 
 def transform_data(raw_data):
     """Convert raw API data into structured format."""
@@ -117,6 +132,7 @@ def transform_data(raw_data):
         del rates[base_currency]
 
     return {TODAY: rates}
+
 
 def save_to_json(new_data):
     """Store transformed data in a JSON file locally."""
@@ -137,6 +153,7 @@ def save_to_json(new_data):
         logging.info(f"FX rates for {new_date} stored in JSON.")
     else:
         logging.info("No new data to update.")
+
 
 if __name__ == "__main__":
     REDIS_CLIENT = initialize_redis_connection()
