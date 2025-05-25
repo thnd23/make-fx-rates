@@ -65,7 +65,7 @@ def check_existing_data_in_json():
     """Check if today's exchange rate data is already stored."""
     if os.path.exists(JSON_FILE):
         try:
-            with open(JSON_FILE, encoding="utf-8") as file:
+            with open(JSON_FILE, "r", encoding="utf-8") as file:
                 data = json.load(file)
                 if TODAY in data:
                     logging.info(
@@ -99,15 +99,11 @@ def sync_data_sources():
         return True
 
     if json_data_exists and not redis_data_exists:
-        try:
-            with open(JSON_FILE, encoding="utf-8") as file:
-                data = json.load(file)
-            logging.info("Syncing JSON data to Redis for %s.", TODAY)
-            save_to_redis({TODAY: data[TODAY]})
-            return data[TODAY]
-        except (IOError, KeyError) as e:
-            logging.error("Error reading JSON file: %s", e)
-            return False
+        with open(JSON_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+        logging.info("Syncing JSON data to Redis for %s.", TODAY)
+        save_to_redis({TODAY: data[TODAY]})
+        return data[TODAY]
 
     if redis_data_exists and not json_data_exists:
         stored_data = json.loads(REDIS_CLIENT.get(TODAY))
@@ -170,29 +166,20 @@ def transform_data(data):
 def save_to_json(new_data):
     """Store transformed data in a JSON file locally."""
     if not os.path.exists(JSON_FILE):
-        try:
-            with open(JSON_FILE, encoding="utf-8") as file:
-                json.dump({}, file)
-        except IOError as e:
-            logging.error("Error: %s", e)
+        with open(JSON_FILE, "w", encoding="utf-8") as file:
+            json.dump({}, file)
 
-    try:
-        with open(JSON_FILE, encoding="utf-8") as file:
-            data = json.load(file)
-    except IOError as e:
-        logging.error("Error: %s", e)
+    with open(JSON_FILE, "r", encoding="utf-8") as file:
+        data = json.load(file)
 
     last_date = list(data.keys())[-1] if data else None
     new_date = list(new_data.keys())[0]
 
     if last_date != new_date:
         data.update(new_data)
-        try:
-            with open(JSON_FILE, encoding="utf-8") as file:
-                json.dump(data, file, indent=4)
+        with open(JSON_FILE, "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4)
             logging.info("FX rates for %s stored in JSON.", new_date)
-        except IOError as e:
-            logging.error("Error: %s", e)
     else:
         logging.info("No new data to update.")
 
