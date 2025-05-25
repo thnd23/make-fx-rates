@@ -1,6 +1,6 @@
 import json, logging, os, time, traceback
 import redis, requests
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # API and storage setup
 API_URL = "https://open.er-api.com/v6/latest/USD"
