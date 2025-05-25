@@ -3,6 +3,7 @@ _A blueprint for a scalable & efficient data pipeline for managing foreign excha
 
 ## Overview  
 Make FX Rates is a **high-performance ETL solution** designed to fetch, store, and synchronize **foreign exchange (FX) rates** efficiently.  
+
 It utilizes **Redis for fast caching**, **JSON for persistent storage**, and **Poetry for dependency management** to ensure seamless execution and scalability.
 
 ## Core Features  
