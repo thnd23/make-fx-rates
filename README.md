@@ -17,7 +17,7 @@ It utilizes **Redis for fast caching**, **JSON for persistent storage**, and **P
 ## Project Structure  
 ```
 make-fx-rates/
-│── logs/                   # Stores execution logs per run
+│── logs/                    # Stores execution logs per run
 │── currency_rates.json      # Local JSON storage for FX rates
 │── main.py                  # ETL pipeline script
 │── pyproject.toml           # Poetry-based dependencies
